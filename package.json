@@ -3,6 +3,7 @@
   "name": "@cnic/trend",
   "appId": "trend",
   "defaultPort": 9060,
+  "appPath": "/my/trend",
   "description": "Micro Frontend",
   "productName": "Micro Frontend",
   "author": "mimas",
