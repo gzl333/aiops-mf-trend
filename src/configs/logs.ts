@@ -1,6 +1,18 @@
 // 更新日志内容，版本降序排列
 export const logs = [
   {
+    version: 'v0.0.4',
+    date: '2023-06-08',
+    time: '10:44:09',
+    release_author: 'mimas',
+    updates: [
+      {
+        info: '增加DNS态势布局与页面',
+        commit_author: 'mimas'
+      }
+    ]
+  },
+  {
     version: 'v0.0.3',
     date: '2023-06-07',
     time: '14:09:09',

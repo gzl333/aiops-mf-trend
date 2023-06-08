@@ -46,27 +46,27 @@ const appVersion = logs[0].version
 
             <q-item
               clickable
-              :active="activeItem === 'service1'"
-              @click="navigateToUrl(appPath + '/service1')"
+              :active="activeItem === 'dns'"
+              @click="navigateToUrl(appPath + '/dns')"
               active-class="active-item"
             >
               <q-item-section class="column items-center">
                 <q-icon name="las la-video" size="lg"/>
-                <div class="active-text text-center">{{ tc('服务1') }}</div>
+                <div class="active-text text-center">{{ tc('DNS') }}</div>
               </q-item-section>
             </q-item>
 
-            <q-item
-              clickable
-              :active="activeItem === 'service2'"
-              @click="navigateToUrl(appPath + '/service2')"
-              active-class="active-item"
-            >
-              <q-item-section class="column items-center">
-                <q-icon name="las la-server" size="lg"/>
-                <div class="active-text text-center">{{ tc('服务2') }}</div>
-              </q-item-section>
-            </q-item>
+<!--            <q-item-->
+<!--              clickable-->
+<!--              :active="activeItem === 'service2'"-->
+<!--              @click="navigateToUrl(appPath + '/service2')"-->
+<!--              active-class="active-item"-->
+<!--            >-->
+<!--              <q-item-section class="column items-center">-->
+<!--                <q-icon name="las la-server" size="lg"/>-->
+<!--                <div class="active-text text-center">{{ tc('服务2') }}</div>-->
+<!--              </q-item-section>-->
+<!--            </q-item>-->
 
           </q-list>
 

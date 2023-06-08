@@ -7,16 +7,20 @@ const routes: RouteRecordRaw[] = [
   {
     path: appPath,
     component: () => import('layouts/MainLayout.vue'),
-    redirect: appPath + '/service1',
+    redirect: appPath + '/dns',
     children: [
       {
-        path: 'service1',
-        component: () => import('pages/Service1Page.vue')
+        path: 'dns',
+        component: () => import('pages/dns/DnsIndex.vue'),
+        redirect: appPath + '/dns/list',
+        children: [
+          {
+            path: 'list',
+            component: () => import('pages/dns/DnsList.vue')
+          }
+        ]
       },
-      {
-        path: 'service2',
-        component: () => import('pages/Service2Page.vue')
-      },
+
       // @mimas: about, updates, releases...
       {
         path: 'about',
