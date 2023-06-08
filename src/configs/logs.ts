@@ -1,6 +1,18 @@
 // 更新日志内容，版本降序排列
 export const logs = [
   {
+    version: 'v0.0.5',
+    date: '2023-06-08',
+    time: '16:20:09',
+    release_author: 'zhjiang123',
+    updates: [
+      {
+        info: 'DNS态势实时数据静态页面',
+        commit_author: 'zhjiang123'
+      }
+    ]
+  },
+  {
     version: 'v0.0.4',
     date: '2023-06-08',
     time: '10:44:09',

@@ -23,7 +23,7 @@
 
 <template>
   <div class="DnsList">
-    this is DnsList
+    DnsList History Analysis
   </div>
 </template>
 

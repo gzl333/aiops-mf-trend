@@ -27,14 +27,6 @@ const activeTab = ref(store.items.currentPath[1]) // keep selection when reloadi
     <q-scroll-area style="height: calc(100vh - 60px);">
       <div class="column">
 
-        <!--      <div class="col-auto">-->
-        <!--        <div class="row justify-center">-->
-        <!--          <global-header-content class="content-fixed-width"/>-->
-        <!--        </div>-->
-        <!--      </div>-->
-
-        <!--      <q-separator/>-->
-
         <div class="col-auto">
           <div class="row justify-center">
 
@@ -62,33 +54,30 @@ const activeTab = ref(store.items.currentPath[1]) // keep selection when reloadi
                       class="q-px-none q-py-md q-mr-md text-bold"
                       name="list"
                       icon="computer"
-                      :label="tc('DNS列表')"
+                      :label="tc('实时数据')"
                       :ripple="false"
                       @click="activeTab = 'list'; navigateToUrl('/my/trend/dns/list')"
                     />
-
+                    <q-tab
+                      no-caps
+                      class="q-px-none q-py-md q-mr-md text-bold"
+                      name="history"
+                      icon="computer"
+                      :label="tc('历史趋势')"
+                      :ripple="false"
+                      @click="activeTab = 'history'; navigateToUrl('/my/trend/dns/history')"
+                    />
+                    <q-tab
+                      no-caps
+                      class="q-px-none q-py-md q-mr-md text-bold"
+                      name="area"
+                      icon="computer"
+                      :label="tc('用户区域')"
+                      :ripple="false"
+                      @click="activeTab = 'area'; navigateToUrl('/my/trend/dns/area')"
+                    />
                   </q-tabs>
                 </div>
-
-<!--                <div class="col-1">-->
-<!--                  <q-btn style="float: right;-->
-<!--                              transform: translate(0, 65%);-->
-<!--                              padding: 16px;-->
-<!--                              border-radius: 28px;-->
-<!--                              min-height: 56px;-->
-<!--                              min-width: 56px;"-->
-<!--                         no-caps-->
-<!--                         no-wrap-->
-<!--                         rounded-->
-<!--                         color="primary"-->
-<!--                         icon="add"-->
-<!--                         @click="navigateToUrl('/my/server/deploy')"-->
-<!--                  >-->
-<!--                    {{ tc('pages.personal.PersonalIndex.create') }}-->
-<!--                  </q-btn>-->
-<!--                  &lt;!&ndash;                <ButtonAdd/>&ndash;&gt;-->
-<!--                </div>-->
-
               </div>
             </div>
           </div>

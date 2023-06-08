@@ -16,7 +16,15 @@ const routes: RouteRecordRaw[] = [
         children: [
           {
             path: 'list',
-            component: () => import('pages/dns/DnsList.vue')
+            component: () => import('pages/dns/DnsCurrentList.vue')
+          },
+          {
+            path: 'history',
+            component: () => import('pages/dns/DnsHistory.vue')
+          },
+          {
+            path: 'area',
+            component: () => import('pages/dns/UserArea.vue')
           }
         ]
       },
