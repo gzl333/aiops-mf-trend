@@ -16,7 +16,26 @@ const routes: RouteRecordRaw[] = [
         children: [
           {
             path: 'list',
-            component: () => import('pages/dns/DnsCurrentList.vue')
+            component: () => import('pages/dns/CurrentList/DnsCurrentList.vue'),
+            redirect: appPath + '/dns/list/check',
+            children: [
+              {
+                path: 'check',
+                component: () => import('pages/dns/CurrentList/CheckData.vue')
+              },
+              {
+                path: 'domain',
+                component: () => import('pages/dns/CurrentList/NxDomain.vue')
+              },
+              {
+                path: 'person',
+                component: () => import('pages/dns/CurrentList/PersonalUser.vue')
+              },
+              {
+                path: 'parse',
+                component: () => import('pages/dns/CurrentList/SuccessParsed.vue')
+              }
+            ]
           },
           {
             path: 'history',

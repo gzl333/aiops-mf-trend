@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, PropType, reactive } from "vue"
-import { getNowFormatDate, payRecordUtcToBeijing } from '../../hooks/processTime'
+import { getNowFormatDate, payRecordUtcToBeijing } from '../../../hooks/processTime'
+import { navigateToUrl } from "single-spa"
 // 时间选择器 数据与方法
 const currentDate = getNowFormatDate(1)
 const date = new Date()
@@ -128,6 +129,14 @@ const userTopList = reactive([
     rank: 10
   }
 ])
+
+import { useStore } from 'stores/store'
+const store = useStore()
+const activeItem = ref('check')
+const changeTab = async (name: string) => {
+  activeItem.value = name
+  navigateToUrl(`/my/trend/dns/list/${name}`)
+}
 </script>
 
 <template>
@@ -220,38 +229,37 @@ const userTopList = reactive([
       </q-card>
     </div>
     <div class="row justify-start">
-    <div class="col-6">
-      <div class="title row justify-between q-pl-md" style="margin-top: 5px; background-color: #f9f9f9">
-        <p class="text-weight-bold">
-<!--          <q-icon name="local_fire_department" class="text-aiops-secondary" style="font-size: 18px;"></q-icon>-->
-          域名访问 Top
-        </p>
-      </div>
-
-      <div class="ranklist row">
-        <div class="col-6">
-          <div class="domain row items-center" v-for="(item, index) in weblist.slice(0, 5)" :key="index">
-<!--            <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>-->
-            <p style="padding-left: 6px; width: 26px;">{{ item.rank }}</p>
-            <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
-            <p>{{ item.value }}</p>
-          </div>
-        </div>
-
-        <div class="col-6">
-          <div class="domain row items-center" v-for="(item, index) in weblist.slice(5)" :key="index">
-            <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>
-            <p v-else style="padding-left: 6px; width: 26px;">{{ item.rank }}</p>
-            <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
-            <p>{{ item.value }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
       <div class="col-6">
         <div class="title row justify-between q-pl-md" style="margin-top: 5px; background-color: #f9f9f9">
           <p class="text-weight-bold">
-<!--            <q-icon name="local_fire_department" class="text-aiops-secondary" style="font-size: 18px;"></q-icon>-->
+            域名访问 Top
+          </p>
+        </div>
+
+        <div class="ranklist row">
+          <div class="col-6">
+            <div class="domain row items-center" v-for="(item, index) in weblist.slice(0, 5)" :key="index">
+              <!--            <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>-->
+              <p style="padding-left: 6px; width: 26px;">{{ item.rank }}</p>
+              <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
+              <p>{{ item.value }}</p>
+            </div>
+          </div>
+
+          <div class="col-6">
+            <div class="domain row items-center" v-for="(item, index) in weblist.slice(5)" :key="index">
+              <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>
+              <p v-else style="padding-left: 6px; width: 26px;">{{ item.rank }}</p>
+              <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
+              <p>{{ item.value }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="title row justify-between q-pl-md" style="margin-top: 5px; background-color: #f9f9f9">
+          <p class="text-weight-bold">
+            <!--            <q-icon name="local_fire_department" class="text-aiops-secondary" style="font-size: 18px;"></q-icon>-->
             用户访问 Top
           </p>
         </div>
@@ -259,7 +267,7 @@ const userTopList = reactive([
         <div class="ranklist row">
           <div class="col-6">
             <div class="domain row items-center" v-for="(item, index) in userTopList.slice(0, 5)" :key="index">
-<!--              <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>-->
+              <!--              <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>-->
               <p  style="padding-left: 6px; width: 26px;">{{ item.rank }}</p>
               <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
               <p>{{ item.value }}</p>
@@ -275,6 +283,26 @@ const userTopList = reactive([
             </div>
           </div>
         </div>
+      </div>
+    </div>
+    <div class="row q-mt-md" style="background-color: #f9f9f9">
+      <q-btn-toggle
+        v-model="activeItem"
+        active-color="black"
+        active-bg-color="bg-blue-grey"
+        class="col-5 no-shadow "
+        flat
+        :options="[
+        {label: '查询量', value: 'check'},
+        {label: '独立用户', value: 'person'},
+        {label: 'NXDOMAI率', value: 'domain'},
+        {label: '成功解析次数', value: 'parse'}
+      ]"
+        @update:model-value="changeTab(activeItem)"
+      >
+      </q-btn-toggle>
+      <div style="width: 90%">
+        <router-view></router-view>
       </div>
     </div>
   </div>
