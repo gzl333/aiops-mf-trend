@@ -72,8 +72,6 @@ const option: EChartsOption = {
     }
   ]
 }
-
-const main = ref()
 onMounted(async () => {
   const chartDom = document.getElementById('main')!
   const myChart = echarts.init(chartDom)

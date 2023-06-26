@@ -84,7 +84,7 @@ const appVersion = logs[0].version
 
                 <div class="text-grey text-caption text-center">{{ tc('releaseTime') }}</div>
                 <div class="text-grey text-caption text-center">
-                  {{ new Date(releaseTime).toLocaleString(i18n.global.locale as string) }}
+                  {{ new Date(releaseTime).toLocaleString(i18n.global.locale) }}
                 </div>
               </q-tooltip>
             </q-icon>

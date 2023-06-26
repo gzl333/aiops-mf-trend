@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, PropType, reactive } from "vue"
+import { ref, reactive } from 'vue'
 import { getNowFormatDate, payRecordUtcToBeijing } from '../../../hooks/processTime'
-import { navigateToUrl } from "single-spa"
+import { navigateToUrl } from 'single-spa'
 // 时间选择器 数据与方法
 const currentDate = getNowFormatDate(1)
 const date = new Date()
@@ -10,12 +10,12 @@ date.setMonth(date.getMonth())
 const date2 = new Date()
 date2.setMonth(date2.getMonth() - 1)
 const startDate = payRecordUtcToBeijing(date2.toISOString())
-function setDateFrom (setTime:string) {
-  return setTime.split('T')[0]
-}
-function setDateTO (setTime:string) {
-  return setTime.split('T')[0]
-}
+// function setDateFrom (setTime:string) {
+//   return setTime.split('T')[0]
+// }
+// function setDateTO (setTime:string) {
+//   return setTime.split('T')[0]
+// }
 const dateFrom = ref(startDate)
 const dateTo = ref(currentDate)
 
@@ -129,9 +129,6 @@ const userTopList = reactive([
     rank: 10
   }
 ])
-
-import { useStore } from 'stores/store'
-const store = useStore()
 const activeItem = ref('check')
 const changeTab = async (name: string) => {
   activeItem.value = name
