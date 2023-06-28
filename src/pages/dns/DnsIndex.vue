@@ -5,15 +5,6 @@ import { useStore } from 'stores/store'
 // import { useRoute } from 'vue-router'
 import { i18n } from 'boot/i18n'
 
-// const props = defineProps({
-//   foo: {
-//     type: String,
-//     required: false,
-//     default: ''
-//   }
-// })
-// const emits = defineEmits(['change', 'delete'])
-
 const store = useStore()
 const tc = i18n.global.tc
 // const route = useRoute()
@@ -24,7 +15,7 @@ const activeTab = ref(store.items.currentPath[1]) // keep selection when reloadi
 
 <template>
   <div class="PersonalIndex">
-    <q-scroll-area style="height: calc(100vh - 60px);">
+    <q-scroll-area style="height: calc(100vh - 60px);" >
       <div class="column">
 
         <div class="col-auto">

@@ -1,6 +1,18 @@
 // 更新日志内容，版本降序排列
 export const logs = [
   {
+    version: 'v0.0.8',
+    date: '2023-06-28',
+    time: '15:30:09',
+    release_author: 'zhjiang123',
+    updates: [
+      {
+        info: '折线图x轴获取',
+        commit_author: 'zhjiang123'
+      }
+    ]
+  },
+  {
     version: 'v0.0.7',
     date: '2023-06-16',
     time: '15:30:09',

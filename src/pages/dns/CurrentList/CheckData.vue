@@ -6,6 +6,12 @@ interface DataItem {
   name: string;
   value: [string, number];
 }
+//  子组件接收父组件传递过来的值
+const props = defineProps({
+  datearray: {
+    type: Array
+  }
+})
 
 function randomData (): DataItem {
   now = new Date(+now + oneDay)
@@ -18,7 +24,6 @@ function randomData (): DataItem {
     ]
   }
 }
-
 const dataAll: DataItem[] = []
 let now = new Date(2022, 5, 14)
 const oneDay = 24 * 3600 * 1000
@@ -27,51 +32,69 @@ for (const i = ref<number>(0); i.value < 1000; i.value++) {
   dataAll.push(randomData())
 }
 
-const option: EChartsOption = {
-  title: {
-    text: '查询量实时折线图'
-  },
-  tooltip: {
-    trigger: 'axis',
-    formatter: function (params: any) {
-      params = params[0]
-      const date = new Date(params.name)
-      return (
-        date.getDate() +
-        '/' +
-        (date.getMonth() + 1) +
-        '/' +
-        date.getFullYear() +
-        ' : ' +
-        params.value[1]
-      )
-    },
-    axisPointer: {
-      animation: false
-    }
-  },
+// const option: EChartsOption = {
+//   title: {
+//     text: '查询量实时折线图'
+//   },
+//   tooltip: {
+//     trigger: 'axis',
+//     formatter: function (params: any) {
+//       params = params[0]
+//       const date = new Date(params.name)
+//       return (
+//         date.getDate() +
+//         '/' +
+//         (date.getMonth() + 1) +
+//         '/' +
+//         date.getFullYear() +
+//         ' : ' +
+//         params.value[1]
+//       )
+//     },
+//     axisPointer: {
+//       animation: false
+//     }
+//   },
+//   xAxis: {
+//     type: 'time',
+//     splitLine: {
+//       show: false
+//     },
+//     data: props.datearray
+//   },
+//   yAxis: {
+//     type: 'value',
+//     boundaryGap: [0, '100%'],
+//     splitLine: {
+//       show: false
+//     }
+//   },
+//   series: [
+//     {
+//       name: 'Fake Data',
+//       type: 'line',
+//       showSymbol: false,
+//       data: dataAll
+//     }
+//   ]
+// }
+console.log(props.datearray)
+const option = {
   xAxis: {
-    type: 'time',
-    splitLine: {
-      show: false
-    }
+    type: 'category',
+    data: props.datearray
   },
   yAxis: {
-    type: 'value',
-    boundaryGap: [0, '100%'],
-    splitLine: {
-      show: false
-    }
+    type: 'value'
   },
   series: [
     {
-      name: 'Fake Data',
-      type: 'line',
-      showSymbol: false,
-      data: dataAll
+      data: [150, 230, 224, 218, 135, 147, 260],
+      type: 'line'
     }
   ]
 }
+
 onMounted(async () => {
   const chartDom = document.getElementById('main')!
   const myChart = echarts.init(chartDom)
@@ -82,20 +105,20 @@ onMounted(async () => {
     height: 700
   })
 
-  setInterval(function () {
-    for (const i = ref<number>(0); i.value < 5; i.value++) {
-      dataAll.shift()
-      dataAll.push(randomData())
-    }
-
-    myChart.setOption<echarts.EChartsOption>({
-      series: [
-        {
-          data: dataAll
-        }
-      ]
-    })
-  }, 1000)
+  // setInterval(function () {
+  //   for (const i = ref<number>(0); i.value < 5; i.value++) {
+  //     dataAll.shift()
+  //     dataAll.push(randomData())
+  //   }
+  //
+  //   myChart.setOption<echarts.EChartsOption>({
+  //     series: [
+  //       {
+  //         data: dataAll
+  //       }
+  //     ]
+  //   })
+  // }, 1000)
 })
 
 </script>

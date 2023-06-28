@@ -1,24 +1,21 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { getNowFormatDate, payRecordUtcToBeijing } from '../../../hooks/processTime'
+import { ref, reactive, onMounted } from 'vue'
+import {
+  getNowFormatTime,
+  payRecordUtcToBeijingMinuteDetail
+} from '../../../hooks/processTime'
 import { navigateToUrl } from 'single-spa'
 // 时间选择器 数据与方法
-const currentDate = getNowFormatDate(1)
+const currentDate = getNowFormatTime(1)
 const date = new Date()
 date.setHours(date.getHours(), date.getMinutes() - date.getTimezoneOffset())
 date.setMonth(date.getMonth())
 const date2 = new Date()
-date2.setMonth(date2.getMonth() - 1)
-const startDate = payRecordUtcToBeijing(date2.toISOString())
-// function setDateFrom (setTime:string) {
-//   return setTime.split('T')[0]
-// }
-// function setDateTO (setTime:string) {
-//   return setTime.split('T')[0]
-// }
+date2.setDate(date2.getDate() - 1)
+const startDate = payRecordUtcToBeijingMinuteDetail(date2.toISOString())
 const dateFrom = ref(startDate)
 const dateTo = ref(currentDate)
-
+console.log('dateFrom', dateFrom)
 const weblist = reactive([
   {
     name: 'www.baidu.com',
@@ -134,17 +131,49 @@ const changeTab = async (name: string) => {
   activeItem.value = name
   navigateToUrl(`/my/trend/dns/list/${name}`)
 }
+const dates = ref<string[]>([])
+function getDayAll (starDay: Date, endDay: Date) {
+  const arr = []
+  // 设置两个日期UTC时间
+  const db = new Date(starDay)
+  const de = new Date(endDay)
+  // 获取两个日期GTM时间
+  const s = db.getTime() - 24 * 60 * 60 * 1000
+  const d = de.getTime() - 24 * 60 * 60 * 1000
+  // 获取到两个日期之间的每一天的毫秒数
+  for (const i = ref<number>(s); i.value <= d;) {
+    i.value = i.value + 60 * 1000
+    arr.push(parseInt(i.value.toString()))
+  }
+  // 获取每一天的时间  YY-MM-DD
+  for (const j in arr) {
+    const time = new Date(arr[j])
+    const year = time.getFullYear()
+    const mouth = (time.getMonth() + 1) >= 10 ? (time.getMonth() + 1) : ('0' + (time.getMonth() + 1))
+    const day = time.getDate() >= 10 ? time.getDate() : ('0' + time.getDate())
+    const hour = time.getHours() >= 10 ? time.getHours() : ('0' + time.getHours())
+    const minutes = time.getMinutes() >= 10 ? time.getMinutes() : ('0' + time.getMinutes())
+    const YYMMDD = year + '-' + mouth + '-' + day + ' ' + hour + ':' + minutes
+    dates.value.push(YYMMDD)
+  }
+  console.log('datesArray', dates)
+  return dates
+}
+onMounted(async () => {
+  await getDayAll(new Date(dateFrom.value), new Date(dateTo.value))
+})
+import checkData from '../CurrentList/CheckData.vue'
 </script>
 
 <template>
   <div class="DnsList">
     <div class=" row justify-start">
       <div class="col-2">
-        <q-input filled dense v-model="dateFrom" mask="date" >
-          <template v-slot:append>
+        <q-input filled dense v-model="dateFrom" >
+          <template v-slot:prepend>
             <q-icon name="event" class="cursor-pointer">
-              <q-popup-proxy ref="qDateProxy" cover transition-show="scale" transition-hide="scale" >`
-                <q-date minimal v-model="dateFrom" @update:model-value="selectDate" >
+              <q-popup-proxy ref="qDateProxy" cover transition-show="scale" transition-hide="scale">
+                <q-date minimal v-model="dateFrom"  mask="YYYY-MM-DD HH:mm" >
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="确定" color="primary" flat/>
                   </div>
@@ -152,19 +181,41 @@ const changeTab = async (name: string) => {
               </q-popup-proxy>
             </q-icon>
           </template>
+          <template v-slot:append>
+            <q-icon name="access_time" class="cursor-pointer">
+              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                <q-time v-model="dateFrom" mask="YYYY-MM-DD HH:mm" format24h>
+                  <div class="row items-center justify-end">
+                    <q-btn v-close-popup label="确定" color="primary" flat/>
+                  </div>
+                </q-time>
+              </q-popup-proxy>
+            </q-icon>
+          </template>
         </q-input>
       </div>
       <div class="text-center q-mx-md q-pt-md">至</div>
       <div class="col-2 q-mr-md">
-        <q-input filled dense v-model="dateTo" mask="date">
-          <template v-slot:append>
+        <q-input filled dense v-model="dateTo" >
+          <template v-slot:prepend>
             <q-icon name="event" class="cursor-pointer">
               <q-popup-proxy ref="qDateProxy" cover transition-show="scale" transition-hide="scale">
-                <q-date minimal v-model="dateTo" @update:model-value="selectDate" >
+                <q-date minimal v-model="dateTo" @update:model-value="selectDate"  mask="YYYY-MM-DD HH:mm" >
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="确定" color="primary" flat/>
                   </div>
                 </q-date>
+              </q-popup-proxy>
+            </q-icon>
+          </template>
+          <template v-slot:append>
+            <q-icon name="access_time" class="cursor-pointer">
+              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                <q-time v-model="dateTo" mask="YYYY-MM-DD HH:mm" format24h>
+                  <div class="row items-center justify-end">
+                    <q-btn v-close-popup label="确定" color="primary" flat/>
+                  </div>
+                </q-time>
               </q-popup-proxy>
             </q-icon>
           </template>
@@ -183,8 +234,6 @@ const changeTab = async (name: string) => {
             </div>
             <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span> 300,000,000</span>
             </div>
-            <div style="font-size: 15px" class="row justify-start q-pl-sm col-3 q-mb-md"><span>日 <i class="las la-arrow-up" style="color: red"></i>100,000,000</span>
-            </div>
           </div>
         </q-card-section>
       </q-card>
@@ -194,8 +243,6 @@ const changeTab = async (name: string) => {
             <div style="font-size: 15px" class="row justify-start  col-3 "><span>独立用户</span>
             </div>
             <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span> 10,000,000</span>
-            </div>
-            <div style="font-size: 15px" class="row justify-start q-pl-sm col-3"><span>日 <i class="las la-arrow-up" style="color: red"></i>1,000,000</span>
             </div>
           </div>
         </q-card-section>
@@ -207,8 +254,6 @@ const changeTab = async (name: string) => {
             </div>
             <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span> 30%</span>
             </div>
-            <div style="font-size: 15px" class="row justify-start q-pl-sm col-3"><span>日 <i class="las la-arrow-up" style="color: red"></i>0.10%</span>
-            </div>
           </div>
         </q-card-section>
       </q-card>
@@ -218,8 +263,6 @@ const changeTab = async (name: string) => {
             <div style="font-size: 15px" class="row justify-start  col-3 "><span>成功解析次数</span>
             </div>
             <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span> 2,000,000</span>
-            </div>
-            <div style="font-size: 15px" class="row justify-start q-pl-sm col-3"><span>日 <i class="las la-arrow-up" style="color: red"></i>888,888,888</span>
             </div>
           </div>
         </q-card-section>
@@ -236,7 +279,6 @@ const changeTab = async (name: string) => {
         <div class="ranklist row">
           <div class="col-6">
             <div class="domain row items-center" v-for="(item, index) in weblist.slice(0, 5)" :key="index">
-              <!--            <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>-->
               <p style="padding-left: 6px; width: 26px;">{{ item.rank }}</p>
               <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
               <p>{{ item.value }}</p>
@@ -256,7 +298,6 @@ const changeTab = async (name: string) => {
       <div class="col-6">
         <div class="title row justify-between q-pl-md" style="margin-top: 5px; background-color: #f9f9f9">
           <p class="text-weight-bold">
-            <!--            <q-icon name="local_fire_department" class="text-aiops-secondary" style="font-size: 18px;"></q-icon>-->
             用户访问 Top
           </p>
         </div>
@@ -264,7 +305,6 @@ const changeTab = async (name: string) => {
         <div class="ranklist row">
           <div class="col-6">
             <div class="domain row items-center" v-for="(item, index) in userTopList.slice(0, 5)" :key="index">
-              <!--              <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>-->
               <p  style="padding-left: 6px; width: 26px;">{{ item.rank }}</p>
               <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
               <p>{{ item.value }}</p>
@@ -299,7 +339,7 @@ const changeTab = async (name: string) => {
       >
       </q-btn-toggle>
       <div style="width: 90%">
-        <router-view></router-view>
+        <router-view :datearray="dates"></router-view>
       </div>
     </div>
   </div>
