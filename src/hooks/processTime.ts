@@ -24,7 +24,8 @@ export const getNowFormatDate = (type: number) => {
 export const getNowFormatTime = (type: number) => {
   month = myDate.getMonth() + 1
   strDate = myDate.getDate()
-  strMinute = myDate.getMinutes()
+  // @ts-ignore
+  strMinute = parseInt((parseInt(myDate.getMinutes().toString()) % 100) / 10)
   const seperator1 = '-'
   if (month >= 1 && month <= 9) {
     month = '0' + month
@@ -33,7 +34,7 @@ export const getNowFormatTime = (type: number) => {
     strDate = '0' + strDate
   }
   if (strMinute >= 0 && strMinute <= 9) {
-    strMinute = '0' + strMinute
+    strMinute = strMinute + '0'
   }
   if (strHours >= 0 && strHours <= 9) {
     strHours = '0' + strHours

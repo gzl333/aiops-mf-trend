@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as echarts from 'echarts'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 type EChartsOption = echarts.EChartsOption
 interface DataItem {
   name: string;
@@ -13,6 +13,13 @@ const props = defineProps({
   }
 })
 
+watch(props, (newVal, oldVal) => {
+  console.log('监听引用类型数据dataList')
+  console.log('new1', newVal)
+  console.log('new2', newVal)
+  console.log('old', oldVal)
+  updateOptionChart()
+})
 function randomData (): DataItem {
   now = new Date(+now + oneDay)
   value = value + Math.random() * 21 - 10
@@ -23,6 +30,12 @@ function randomData (): DataItem {
       Math.round(value)
     ]
   }
+}
+const updateOptionChart = async () => {
+  const chartDom = document.getElementById('main')!
+  const myChart = echarts.init(chartDom)
+  await myChart.setOption(option)
+  option && myChart.setOption(option)
 }
 const dataAll: DataItem[] = []
 let now = new Date(2022, 5, 14)
@@ -80,8 +93,29 @@ for (const i = ref<number>(0); i.value < 1000; i.value++) {
 // }
 console.log(props.datearray)
 const option = {
+  title: {
+    text: '查询量趋势'
+  },
+  tooltip: {
+    trigger: 'axis'
+  },
+  legend: {
+    data: ['查询量']
+  },
+  grid: {
+    left: '3%',
+    right: '4%',
+    bottom: '3%',
+    containLabel: true
+  },
+  toolbox: {
+    feature: {
+      saveAsImage: {}
+    }
+  },
   xAxis: {
     type: 'category',
+    boundaryGap: false,
     data: props.datearray
   },
   yAxis: {
@@ -89,12 +123,13 @@ const option = {
   },
   series: [
     {
-      data: [150, 230, 224, 218, 135, 147, 260],
-      type: 'line'
+      name: '查询量',
+      type: 'line',
+      stack: 'Total',
+      data: [120, 132, 101, 134, 90, 230, 210, 120, 132, 101, 134, 90, 230, 210]
     }
   ]
 }
-
 onMounted(async () => {
   const chartDom = document.getElementById('main')!
   const myChart = echarts.init(chartDom)
@@ -104,21 +139,6 @@ onMounted(async () => {
     width: 1230,
     height: 700
   })
-
-  // setInterval(function () {
-  //   for (const i = ref<number>(0); i.value < 5; i.value++) {
-  //     dataAll.shift()
-  //     dataAll.push(randomData())
-  //   }
-  //
-  //   myChart.setOption<echarts.EChartsOption>({
-  //     series: [
-  //       {
-  //         data: dataAll
-  //       }
-  //     ]
-  //   })
-  // }, 1000)
 })
 
 </script>

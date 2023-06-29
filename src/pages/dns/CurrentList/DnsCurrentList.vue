@@ -7,11 +7,8 @@ import {
 import { navigateToUrl } from 'single-spa'
 // 时间选择器 数据与方法
 const currentDate = getNowFormatTime(1)
-const date = new Date()
-date.setHours(date.getHours(), date.getMinutes() - date.getTimezoneOffset())
-date.setMonth(date.getMonth())
-const date2 = new Date()
-date2.setDate(date2.getDate() - 1)
+const date2 = new Date(currentDate)
+date2.setHours(date2.getHours() - 2)
 const startDate = payRecordUtcToBeijingMinuteDetail(date2.toISOString())
 const dateFrom = ref(startDate)
 const dateTo = ref(currentDate)
@@ -132,6 +129,7 @@ const changeTab = async (name: string) => {
   navigateToUrl(`/my/trend/dns/list/${name}`)
 }
 const dates = ref<string[]>([])
+// 获取时间段间隔十分钟数组
 function getDayAll (starDay: Date, endDay: Date) {
   const arr = []
   // 设置两个日期UTC时间
@@ -139,10 +137,10 @@ function getDayAll (starDay: Date, endDay: Date) {
   const de = new Date(endDay)
   // 获取两个日期GTM时间
   const s = db.getTime() - 24 * 60 * 60 * 1000
-  const d = de.getTime() - 24 * 60 * 60 * 1000
+  const d = de.getTime() - 24 * 60 * 60 * 1000 - 10 * 60 * 1000
   // 获取到两个日期之间的每一天的毫秒数
   for (const i = ref<number>(s); i.value <= d;) {
-    i.value = i.value + 60 * 1000
+    i.value = i.value + 60 * 1000 * 10
     arr.push(parseInt(i.value.toString()))
   }
   // 获取每一天的时间  YY-MM-DD
@@ -162,7 +160,17 @@ function getDayAll (starDay: Date, endDay: Date) {
 onMounted(async () => {
   await getDayAll(new Date(dateFrom.value), new Date(dateTo.value))
 })
-import checkData from '../CurrentList/CheckData.vue'
+const minuteOptionsTime1 = ref<number[]>([0, 10, 20, 30, 40, 50])
+const checkdate = async (date: string) => {
+  if (new Date(date) > new Date(currentDate)) {
+    alert('时间选择无效')
+  }
+  console.log('dateFromchange', date)
+}
+const search = async (date2: string) => {
+  dates.value = []
+  await getDayAll(new Date(date2), new Date(dateTo.value))
+}
 </script>
 
 <template>
@@ -184,7 +192,7 @@ import checkData from '../CurrentList/CheckData.vue'
           <template v-slot:append>
             <q-icon name="access_time" class="cursor-pointer">
               <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                <q-time v-model="dateFrom" mask="YYYY-MM-DD HH:mm" format24h>
+                <q-time v-model="dateFrom" mask="YYYY-MM-DD HH:mm" format24h with-hours:true  :minute-options="minuteOptionsTime1" @update:model-value="checkdate(dateFrom)">
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="确定" color="primary" flat/>
                   </div>
@@ -211,7 +219,7 @@ import checkData from '../CurrentList/CheckData.vue'
           <template v-slot:append>
             <q-icon name="access_time" class="cursor-pointer">
               <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                <q-time v-model="dateTo" mask="YYYY-MM-DD HH:mm" format24h>
+                <q-time v-model="dateTo" mask="YYYY-MM-DD HH:mm" format24h :minute-options="minuteOptionsTime1">
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="确定" color="primary" flat/>
                   </div>
@@ -221,6 +229,7 @@ import checkData from '../CurrentList/CheckData.vue'
           </template>
         </q-input>
       </div>
+      <div class='col-1'><q-btn style="height: 40px"  outline label="搜索" class="q-px-lg q-ml-lg" @click="search(dateFrom)"/></div>
       <div class="col-6 text-grey-6 q-mt-md">
         <span> 声明: 相关接口正在研发中，本页面暂时使用静态数据</span>
       </div>
@@ -339,7 +348,7 @@ import checkData from '../CurrentList/CheckData.vue'
       >
       </q-btn-toggle>
       <div style="width: 90%">
-        <router-view :datearray="dates"></router-view>
+        <router-view v-model:datearray="dates"></router-view>
       </div>
     </div>
   </div>
