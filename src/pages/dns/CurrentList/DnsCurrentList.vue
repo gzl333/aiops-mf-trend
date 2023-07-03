@@ -1,18 +1,27 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import LineChart from 'components/chart/LineChart.vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import {
   getNowFormatTime,
   payRecordUtcToBeijingMinuteDetail
 } from '../../../hooks/processTime'
 import { navigateToUrl } from 'single-spa'
-// 时间选择器 数据与方法
+import aiops from '../../../api/aiops'
+
 const currentDate = getNowFormatTime(1)
 const date2 = new Date(currentDate)
 date2.setHours(date2.getHours() - 2)
 const startDate = payRecordUtcToBeijingMinuteDetail(date2.toISOString())
 const dateFrom = ref(startDate)
+const startDateStamp = new Date(dateFrom.value).getTime()
+const dateFromStamp = ref(startDateStamp)
 const dateTo = ref(currentDate)
-console.log('dateFrom', dateFrom)
+const currentDateStamp = new Date(dateTo.value).getTime()
+const dateToStamp = ref(currentDateStamp)
+// console.log('startDate', startDate)
+// console.log('currentDate', currentDate)
+// console.log('currentDateStamp', currentDateStamp)
+// console.log('startDateStamp', startDateStamp)
 const weblist = reactive([
   {
     name: 'www.baidu.com',
@@ -128,6 +137,26 @@ const changeTab = async (name: string) => {
   activeItem.value = name
   navigateToUrl(`/my/trend/dns/list/${name}`)
 }
+
+const minuteOptionsTime1 = ref<number[]>([0, 10, 20, 30, 40, 50])
+const checkUpdateFromdate = async (date: string) => {
+  dnsTrendDataQuery.value.start = (new Date(date).getTime()) / 1000
+  if (new Date(date) > new Date(currentDate)) {
+    alert('时间选择无效')
+  }
+  // console.log('dateFromchange', date)
+}
+const UpdateTodate = async (date: string) => {
+  dnsTrendDataQuery.value.end = (new Date(date).getTime()) / 1000
+}
+const search = async (date2: string) => {
+  dates.value = []
+  await getDayAll(new Date(date2), new Date(dateTo.value))
+  await getTrendData()
+  await getTopData()
+}
+// chart
+// x轴——时间
 const dates = ref<string[]>([])
 // 获取时间段间隔十分钟数组
 function getDayAll (starDay: Date, endDay: Date) {
@@ -154,23 +183,139 @@ function getDayAll (starDay: Date, endDay: Date) {
     const YYMMDD = year + '-' + mouth + '-' + day + ' ' + hour + ':' + minutes
     dates.value.push(YYMMDD)
   }
-  console.log('datesArray', dates)
+  // console.log('datesArray', dates)
   return dates
+}
+const props = defineProps({
+  datearray: {
+    type: Array
+  }
+})
+// 变量定义
+const mapRef = ref()
+const queryData = ref<number[]>([])
+const option = computed(() => ({
+  title: {
+    text: '查询量趋势'
+  },
+  tooltip: {
+    trigger: 'axis'
+  },
+  legend: {
+    data: ['查询量']
+  },
+  grid: {
+    left: '3%',
+    right: '4%',
+    bottom: '3%',
+    containLabel: true
+  },
+  toolbox: {
+    feature: {
+      saveAsImage: {}
+    }
+  },
+  xAxis: {
+    type: 'category',
+    boundaryGap: false,
+    data: props.datearray
+  },
+  yAxis: {
+    type: 'value'
+  },
+  series: [
+    {
+      name: '查询量',
+      type: 'line',
+      stack: 'Total',
+      // data: [120, 132, 101, 134, 90, 230, 210, 120, 132, 101, 134, 90, 230, 210]
+      data: queryData.value
+    }
+  ]
+}))
+// trend 接口
+interface trenDataInfoInterface {
+  timestamp?: number | undefined
+  total_request_number?: number | undefined
+  independent_users_number?: number | undefined
+  nxdomain_number?: number | undefined
+  success_number?: number | undefined
+  nxdomain_rate?: string | undefined
+}
+interface trendDataQueryInterface {
+  page_size?: number;
+  page?: number;
+  ordering?: string;
+  start?: number;
+  end?: number;
+}
+const numOfQuery = ref<number>(1)
+const numOfUser = ref<number>(1)
+const numOfNxdomain = ref<number>(1)
+const numOfParse = ref<number>(1)
+const nxdomainRate = ref<string>('1%')
+const pageSize = ref<number>(10000)
+const page = ref<number>()
+const ordering = ref<string>('timestamp')
+const start = ref<number>(dateFromStamp.value / 1000)
+const end = ref<number>(dateToStamp.value / 1000)
+// const start = ref<number>(1688262601)
+// const end = ref<number>(1688263202)
+const dnsTrendDataQuery = ref<trendDataQueryInterface>({
+  page_size: pageSize.value,
+  page: page.value,
+  ordering: ordering.value,
+  start: start.value,
+  end: end.value
+})
+const allResult = ref()
+const getTrendData = async () => {
+  mapRef.value.chartStartLoading()
+  aiops.trend.dns.getDnsTrendData({ query: dnsTrendDataQuery.value }).then((res) => {
+    allResult.value = res.data.results
+    numOfQuery.value = 0
+    numOfUser.value = 0
+    numOfNxdomain.value = 0
+    numOfParse.value = 0
+    queryData.value = []
+    for (let i = 0; i < allResult.value.length; i++) {
+      queryData.value.push(allResult.value[i].total_request_number)
+      console.log('result length', allResult.value.length)
+      numOfQuery.value += allResult.value[i].total_request_number
+      numOfUser.value += allResult.value[i].independent_users_number
+      numOfNxdomain.value += allResult.value[i].nxdomain_number
+      numOfParse.value += allResult.value[i].success_number
+    }
+    nxdomainRate.value = String((numOfNxdomain.value * 100 / numOfQuery.value).toPrecision(4)) + '%'
+    numOfUser.value = Math.round(numOfUser.value / allResult.value.length)
+    mapRef.value.chartStopLoading()
+  })
+}
+// top 接口
+interface topDataQueryInterface {
+  start?: number;
+  end?: number;
+}
+const topDomain = ref<string[]>([])
+const topUser = ref<string[]>([])
+const dnsTopDataQuery = ref<topDataQueryInterface>({
+  start: start.value,
+  end: end.value
+})
+const getTopData = async () => {
+  aiops.trend.top.getDnsTopData({ query: dnsTopDataQuery.value }).then((res) => {
+    topDomain.value = res.data.domain
+    topUser.value = res.data.user
+    console.log('topDomain.value', topDomain.value)
+    console.log('topUser.value', topUser.value)
+  })
 }
 onMounted(async () => {
   await getDayAll(new Date(dateFrom.value), new Date(dateTo.value))
+  await getTrendData()
+  await getTopData()
 })
-const minuteOptionsTime1 = ref<number[]>([0, 10, 20, 30, 40, 50])
-const checkdate = async (date: string) => {
-  if (new Date(date) > new Date(currentDate)) {
-    alert('时间选择无效')
-  }
-  console.log('dateFromchange', date)
-}
-const search = async (date2: string) => {
-  dates.value = []
-  await getDayAll(new Date(date2), new Date(dateTo.value))
-}
+
 </script>
 
 <template>
@@ -192,7 +337,7 @@ const search = async (date2: string) => {
           <template v-slot:append>
             <q-icon name="access_time" class="cursor-pointer">
               <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                <q-time v-model="dateFrom" mask="YYYY-MM-DD HH:mm" format24h with-hours:true  :minute-options="minuteOptionsTime1" @update:model-value="checkdate(dateFrom)">
+                <q-time v-model="dateFrom" mask="YYYY-MM-DD HH:mm" format24h with-hours:true  :minute-options="minuteOptionsTime1" @update:model-value="checkUpdateFromdate(dateFrom)">
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="确定" color="primary" flat/>
                   </div>
@@ -219,7 +364,7 @@ const search = async (date2: string) => {
           <template v-slot:append>
             <q-icon name="access_time" class="cursor-pointer">
               <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                <q-time v-model="dateTo" mask="YYYY-MM-DD HH:mm" format24h :minute-options="minuteOptionsTime1">
+                <q-time v-model="dateTo" mask="YYYY-MM-DD HH:mm" format24h :minute-options="minuteOptionsTime1" @update:model-value="UpdateTodate(dateTo)">
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="确定" color="primary" flat/>
                   </div>
@@ -230,9 +375,9 @@ const search = async (date2: string) => {
         </q-input>
       </div>
       <div class='col-1'><q-btn style="height: 40px"  outline label="搜索" class="q-px-lg q-ml-lg" @click="search(dateFrom)"/></div>
-      <div class="col-6 text-grey-6 q-mt-md">
+      <!-- <div class="col-6 text-grey-6 q-mt-md">
         <span> 声明: 相关接口正在研发中，本页面暂时使用静态数据</span>
-      </div>
+      </div> -->
     </div>
     <div class=" row justify-start q-mt-md q-px-sm q-py-sm"  style="background-color: #f9f9f9">
       <div class="col-12 q-pl-md text-bold" style="font-size: 18px;"><span>关键指标</span></div>
@@ -241,7 +386,7 @@ const search = async (date2: string) => {
           <div class="column justify-start">
             <div style="font-size: 15px" class="row justify-start  col-3 "><span>查询量</span>
             </div>
-            <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span> 300,000,000</span>
+            <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span>{{numOfQuery}}</span>
             </div>
           </div>
         </q-card-section>
@@ -249,9 +394,9 @@ const search = async (date2: string) => {
       <q-card class="col-3 column justify-center no-shadow  q-pl-sm" style="background-color: #ffffff">
         <q-card-section class="bg-white">
           <div class="column justify-start">
-            <div style="font-size: 15px" class="row justify-start  col-3 "><span>独立用户</span>
+            <div style="font-size: 15px" class="row justify-start  col-3 "><span>平均用户数量</span>
             </div>
-            <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span> 10,000,000</span>
+            <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span>{{numOfUser}}</span>
             </div>
           </div>
         </q-card-section>
@@ -261,7 +406,7 @@ const search = async (date2: string) => {
           <div class="column justify-start">
             <div style="font-size: 15px" class="row justify-start  col-3 "><span>NXDOMAIN率</span>
             </div>
-            <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span> 30%</span>
+            <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span>{{nxdomainRate}}</span>
             </div>
           </div>
         </q-card-section>
@@ -271,7 +416,7 @@ const search = async (date2: string) => {
           <div class="column justify-start">
             <div style="font-size: 15px" class="row justify-start  col-3 "><span>成功解析次数</span>
             </div>
-            <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span> 2,000,000</span>
+            <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span>{{ numOfParse }}</span>
             </div>
           </div>
         </q-card-section>
@@ -286,20 +431,20 @@ const search = async (date2: string) => {
         </div>
 
         <div class="ranklist row">
-          <div class="col-6">
-            <div class="domain row items-center" v-for="(item, index) in weblist.slice(0, 5)" :key="index">
-              <p style="padding-left: 6px; width: 26px;">{{ item.rank }}</p>
-              <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
-              <p>{{ item.value }}</p>
+          <div class="col-6 q-pl-sm">
+            <div class="domain row items-center" v-for="(item, index) in topDomain.slice(0, 5)" :key="index">
+              <p style="padding-left: 6px; width: 20px;">{{ index + 1 }}</p>
+              <p style="font-weight: 600; width: 200px;">{{ item.name }}</p>
+              <p>{{ item.query_num }}</p>
             </div>
           </div>
 
           <div class="col-6">
-            <div class="domain row items-center" v-for="(item, index) in weblist.slice(5)" :key="index">
+            <div class="domain row items-center" v-for="(item, index) in topDomain.slice(5, 10)" :key="index">
               <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>
-              <p v-else style="padding-left: 6px; width: 26px;">{{ item.rank }}</p>
+              <p v-else style="padding-left: 6px; width: 26px;">{{ index + 6 }}</p>
               <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
-              <p>{{ item.value }}</p>
+              <p>{{ item.query_num }}</p>
             </div>
           </div>
         </div>
@@ -313,19 +458,19 @@ const search = async (date2: string) => {
 
         <div class="ranklist row">
           <div class="col-6">
-            <div class="domain row items-center" v-for="(item, index) in userTopList.slice(0, 5)" :key="index">
-              <p  style="padding-left: 6px; width: 26px;">{{ item.rank }}</p>
+            <div class="domain row items-center" v-for="(item, index) in topUser.slice(0, 5)" :key="index">
+              <p  style="padding-left: 6px; width: 26px;">{{ index + 1 }}</p>
               <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
-              <p>{{ item.value }}</p>
+              <p>{{ item.query_num }}</p>
             </div>
           </div>
 
           <div class="col-6">
-            <div class="domain row items-center" v-for="(item, index) in userTopList.slice(5)" :key="index">
+            <div class="domain row items-center" v-for="(item, index) in topUser.slice(5, 10)" :key="index">
               <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>
-              <p v-else style="padding-left: 6px; width: 26px;">{{ item.rank }}</p>
+              <p v-else style="padding-left: 6px; width: 26px;">{{ index + 6 }}</p>
               <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
-              <p>{{ item.value }}</p>
+              <p>{{ item.query_num }}</p>
             </div>
           </div>
         </div>
@@ -349,6 +494,11 @@ const search = async (date2: string) => {
       </q-btn-toggle>
       <div style="width: 90%">
         <router-view v-model:datearray="dates"></router-view>
+      </div>
+    </div>
+    <div class="row q-mt-lg justify-start">
+      <div class="col-12">
+        <line-chart :option="option" ref="mapRef"/>
       </div>
     </div>
   </div>
