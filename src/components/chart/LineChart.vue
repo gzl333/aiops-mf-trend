@@ -67,7 +67,7 @@ onMounted(() => {
 
 <template>
   <div class="LineChart" style="width: 100%">
-    <div ref="container" :style="{ width: '100%', height: '220px' }"></div>
+    <div ref="container" :style="{ width: '100%', height: '400px' }"></div>
   </div>
 </template>
 

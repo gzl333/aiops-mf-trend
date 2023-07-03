@@ -165,7 +165,7 @@ function getDayAll (starDay: Date, endDay: Date) {
   const db = new Date(starDay)
   const de = new Date(endDay)
   // 获取两个日期GTM时间
-  const s = db.getTime() - 24 * 60 * 60 * 1000
+  const s = db.getTime() - 24 * 60 * 60 * 1000 - 10 * 60 * 1000
   const d = de.getTime() - 24 * 60 * 60 * 1000 - 10 * 60 * 1000
   // 获取到两个日期之间的每一天的毫秒数
   for (const i = ref<number>(s); i.value <= d;) {
@@ -193,7 +193,7 @@ const props = defineProps({
 })
 // 变量定义
 const mapRef = ref()
-const queryData = ref<number[]>([])
+const queryData = ref<any[]>([])
 const option = computed(() => ({
   title: {
     text: '查询量趋势'
@@ -218,7 +218,7 @@ const option = computed(() => ({
   xAxis: {
     type: 'category',
     boundaryGap: false,
-    data: props.datearray
+    data: dates.value
   },
   yAxis: {
     type: 'value'
@@ -228,7 +228,6 @@ const option = computed(() => ({
       name: '查询量',
       type: 'line',
       stack: 'Total',
-      // data: [120, 132, 101, 134, 90, 230, 210, 120, 132, 101, 134, 90, 230, 210]
       data: queryData.value
     }
   ]
@@ -308,6 +307,58 @@ const getTopData = async () => {
     topUser.value = res.data.user
     console.log('topDomain.value', topDomain.value)
     console.log('topUser.value', topUser.value)
+  })
+}
+// {label: '查询量', value: 'check'},
+// {label: '独立用户', value: 'person'},
+// {label: 'NXDOMAI率', value: 'domain'},
+// {label: '成功解析次数', value: 'parse'}
+const changeChart = async (activeid: string) => {
+  queryData.value = []
+  await aiops.trend.dns.getDnsTrendData({ query: dnsTrendDataQuery.value }).then((res) => {
+    mapRef.value.chartStartLoading()
+    allResult.value = res.data.results
+    numOfQuery.value = 0
+    numOfUser.value = 0
+    numOfNxdomain.value = 0
+    numOfParse.value = 0
+    queryData.value = []
+    if (activeid === 'check') {
+      for (let i = 0; i < allResult.value.length; i++) {
+        queryData.value.push(allResult.value[i].total_request_number)
+        numOfQuery.value += allResult.value[i].total_request_number
+        numOfUser.value += allResult.value[i].independent_users_number
+        numOfNxdomain.value += allResult.value[i].nxdomain_number
+        numOfParse.value += allResult.value[i].success_number
+      }
+    } else if (activeid === 'person') {
+      for (let i = 0; i < allResult.value.length; i++) {
+        queryData.value.push(allResult.value[i].independent_users_number)
+        numOfQuery.value += allResult.value[i].total_request_number
+        numOfUser.value += allResult.value[i].independent_users_number
+        numOfNxdomain.value += allResult.value[i].nxdomain_number
+        numOfParse.value += allResult.value[i].success_number
+      }
+    } else if (activeid === 'domain') {
+      for (let i = 0; i < allResult.value.length; i++) {
+        queryData.value.push(String(allResult.value[i].nxdomain_number * 100 / allResult.value[i].total_request_number))
+        numOfQuery.value += allResult.value[i].total_request_number
+        numOfUser.value += allResult.value[i].independent_users_number
+        numOfNxdomain.value += allResult.value[i].nxdomain_number
+        numOfParse.value += allResult.value[i].success_number
+      }
+    } else {
+      for (let i = 0; i < allResult.value.length; i++) {
+        queryData.value.push(allResult.value[i].success_number)
+        numOfQuery.value += allResult.value[i].total_request_number
+        numOfUser.value += allResult.value[i].independent_users_number
+        numOfNxdomain.value += allResult.value[i].nxdomain_number
+        numOfParse.value += allResult.value[i].success_number
+      }
+    }
+    nxdomainRate.value = String((numOfNxdomain.value * 100 / numOfQuery.value).toPrecision(4)) + '%'
+    numOfUser.value = Math.round(numOfUser.value / allResult.value.length)
+    mapRef.value.chartStopLoading()
   })
 }
 onMounted(async () => {
@@ -443,7 +494,7 @@ onMounted(async () => {
             <div class="domain row items-center" v-for="(item, index) in topDomain.slice(5, 10)" :key="index">
               <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>
               <p v-else style="padding-left: 6px; width: 26px;">{{ index + 6 }}</p>
-              <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
+              <p style="font-weight: 600; width: 200px;">{{ item.name }}</p>
               <p>{{ item.query_num }}</p>
             </div>
           </div>
@@ -489,7 +540,7 @@ onMounted(async () => {
         {label: 'NXDOMAI率', value: 'domain'},
         {label: '成功解析次数', value: 'parse'}
       ]"
-        @update:model-value="changeTab(activeItem)"
+        @update:model-value="changeChart(activeItem)"
       >
       </q-btn-toggle>
       <div style="width: 90%">
