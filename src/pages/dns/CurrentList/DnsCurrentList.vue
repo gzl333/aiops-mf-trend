@@ -22,116 +22,6 @@ const dateToStamp = ref(currentDateStamp)
 // console.log('currentDate', currentDate)
 // console.log('currentDateStamp', currentDateStamp)
 // console.log('startDateStamp', startDateStamp)
-const weblist = reactive([
-  {
-    name: 'www.baidu.com',
-    value: 137999999,
-    color: 'text-aiops-negative',
-    rank: '1'
-  },
-  {
-    name: 'bao.ac.cn',
-    value: 100987,
-    color: 'text-aiops-secondary',
-    rank: '2'
-  },
-  {
-    name: 'www.cstcloud.com',
-    value: 82447,
-    color: 'text-aiops-btn-border',
-    rank: '3'
-  },
-  {
-    name: 'www.aiops.com',
-    value: 70408,
-    rank: '4'
-  },
-  {
-    name: 'www.rca.com',
-    value: 60476,
-    rank: 5
-  },
-  {
-    name: 'www.rca2.com',
-    value: 40625,
-    rank: 6
-  },
-  {
-    name: 'www.rca2.com',
-    value: 40625,
-    rank: 7
-  },
-  {
-    name: 'www.rca2.com',
-    value: 40625,
-    rank: 8
-  },
-  {
-    name: 'www.rca2.com',
-    value: 40625,
-    rank: 9
-  },
-  {
-    name: 'www.rca2.com',
-    value: 40625,
-    rank: 10
-  }
-])
-const userTopList = reactive([
-  {
-    name: 'zhjiang@cnic.cn',
-    value: 1999,
-    color: 'text-aiops-negative',
-    rank: '1'
-  },
-  {
-    name: 'lbg@cnic.cn',
-    value: 1387,
-    color: 'text-aiops-secondary',
-    rank: '2'
-  },
-  {
-    name: 'zg@cnic.cn',
-    value: 447,
-    color: 'text-aiops-btn-border',
-    rank: '3'
-  },
-  {
-    name: 'hai@cnic.cn',
-    value: 408,
-    rank: '4'
-  },
-  {
-    name: 'ming@cnic.cn',
-    value: 376,
-    rank: 5
-  },
-  {
-    name: 'luo@cnic.cn',
-    value: 325,
-    rank: 6
-  },
-  {
-    name: 'xue@cnic.cn',
-    value: 225,
-    rank: 7
-  },
-  {
-    name: 'xie@cnic.cn',
-    value: 225,
-    rank: 8
-  },
-  {
-    name: 'li@cnic.cn',
-    value: 224,
-    rank: 9
-  },
-  {
-    name: 'lijhui@cnic.cn',
-    value: 215,
-    rank: 10
-  }
-])
 const activeItem = ref('check')
 const changeTab = async (name: string) => {
   activeItem.value = name
@@ -141,6 +31,7 @@ const changeTab = async (name: string) => {
 const minuteOptionsTime1 = ref<number[]>([0, 10, 20, 30, 40, 50])
 const checkUpdateFromdate = async (date: string) => {
   dnsTrendDataQuery.value.start = (new Date(date).getTime()) / 1000
+  dnsTopDataQuery.value.start = (new Date(date).getTime()) / 1000
   if (new Date(date) > new Date(currentDate)) {
     alert('时间选择无效')
   }
@@ -148,6 +39,7 @@ const checkUpdateFromdate = async (date: string) => {
 }
 const UpdateTodate = async (date: string) => {
   dnsTrendDataQuery.value.end = (new Date(date).getTime()) / 1000
+  dnsTopDataQuery.value.start = (new Date(date).getTime()) / 1000
 }
 const search = async (date2: string) => {
   dates.value = []
@@ -165,8 +57,8 @@ function getDayAll (starDay: Date, endDay: Date) {
   const db = new Date(starDay)
   const de = new Date(endDay)
   // 获取两个日期GTM时间
-  const s = db.getTime() - 24 * 60 * 60 * 1000 - 10 * 60 * 1000
-  const d = de.getTime() - 24 * 60 * 60 * 1000 - 10 * 60 * 1000
+  const s = db.getTime() - 10 * 60 * 1000
+  const d = de.getTime() - 10 * 60 * 1000
   // 获取到两个日期之间的每一天的毫秒数
   for (const i = ref<number>(s); i.value <= d;) {
     i.value = i.value + 60 * 1000 * 10
@@ -186,12 +78,8 @@ function getDayAll (starDay: Date, endDay: Date) {
   // console.log('datesArray', dates)
   return dates
 }
-const props = defineProps({
-  datearray: {
-    type: Array
-  }
-})
 // 变量定义
+dates.value = []
 const mapRef = ref()
 const queryData = ref<any[]>([])
 const option = computed(() => ({
@@ -253,8 +141,8 @@ const numOfUser = ref<number>(1)
 const numOfNxdomain = ref<number>(1)
 const numOfParse = ref<number>(1)
 const nxdomainRate = ref<string>('1%')
-const pageSize = ref<number>(10000)
-const page = ref<number>()
+const pageSize = ref<number>(2000)
+const page = ref<number>(1)
 const ordering = ref<string>('timestamp')
 const start = ref<number>(dateFromStamp.value / 1000)
 const end = ref<number>(dateToStamp.value / 1000)
@@ -271,12 +159,18 @@ const allResult = ref()
 const getTrendData = async () => {
   mapRef.value.chartStartLoading()
   aiops.trend.dns.getDnsTrendData({ query: dnsTrendDataQuery.value }).then((res) => {
+    console.log('dnsTrendDataQuery.value.start', dnsTrendDataQuery.value.start)
     allResult.value = res.data.results
     numOfQuery.value = 0
     numOfUser.value = 0
     numOfNxdomain.value = 0
     numOfParse.value = 0
     queryData.value = []
+    for (let timeStart = dnsTrendDataQuery.value.start; timeStart < dnsTrendDataQuery.value.end; timeStart += 600) {
+      if (timeStart < allResult.value[0].timestamp) {
+        queryData.value.push(0)
+      }
+    }
     for (let i = 0; i < allResult.value.length; i++) {
       queryData.value.push(allResult.value[i].total_request_number)
       console.log('result length', allResult.value.length)
@@ -292,8 +186,8 @@ const getTrendData = async () => {
 }
 // top 接口
 interface topDataQueryInterface {
-  start?: number;
-  end?: number;
+  start: number;
+  end: number;
 }
 const topDomain = ref<string[]>([])
 const topUser = ref<string[]>([])
@@ -305,14 +199,11 @@ const getTopData = async () => {
   aiops.trend.top.getDnsTopData({ query: dnsTopDataQuery.value }).then((res) => {
     topDomain.value = res.data.domain
     topUser.value = res.data.user
+    console.log('dnsTopDataQuery.value.start', dnsTopDataQuery.value.start)
     console.log('topDomain.value', topDomain.value)
     console.log('topUser.value', topUser.value)
   })
 }
-// {label: '查询量', value: 'check'},
-// {label: '独立用户', value: 'person'},
-// {label: 'NXDOMAI率', value: 'domain'},
-// {label: '成功解析次数', value: 'parse'}
 const changeChart = async (activeid: string) => {
   queryData.value = []
   await aiops.trend.dns.getDnsTrendData({ query: dnsTrendDataQuery.value }).then((res) => {
@@ -323,6 +214,9 @@ const changeChart = async (activeid: string) => {
     numOfNxdomain.value = 0
     numOfParse.value = 0
     queryData.value = []
+    for (let timeStart = dnsTrendDataQuery.value.start; timeStart < allResult.value[0].timestamp; timeStart += 600) {
+      queryData.value.push(0)
+    }
     if (activeid === 'check') {
       for (let i = 0; i < allResult.value.length; i++) {
         queryData.value.push(allResult.value[i].total_request_number)
@@ -359,6 +253,10 @@ const changeChart = async (activeid: string) => {
     nxdomainRate.value = String((numOfNxdomain.value * 100 / numOfQuery.value).toPrecision(4)) + '%'
     numOfUser.value = Math.round(numOfUser.value / allResult.value.length)
     mapRef.value.chartStopLoading()
+    console.log('dnsTrendDataQuery.value', dnsTrendDataQuery.value)
+    console.log('allResult.value', allResult.value)
+    console.log('res.data', res.data)
+    console.log('queryData.value.length', queryData.value.length)
   })
 }
 onMounted(async () => {
@@ -377,7 +275,7 @@ onMounted(async () => {
           <template v-slot:prepend>
             <q-icon name="event" class="cursor-pointer">
               <q-popup-proxy ref="qDateProxy" cover transition-show="scale" transition-hide="scale">
-                <q-date minimal v-model="dateFrom"  mask="YYYY-MM-DD HH:mm" >
+                <q-date minimal v-model="dateFrom"  mask="YYYY-MM-DD HH:mm" format24h :minute-options="minuteOptionsTime1" @update:model-value="checkUpdateFromdate(dateFrom)">
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="确定" color="primary" flat/>
                   </div>
@@ -388,7 +286,7 @@ onMounted(async () => {
           <template v-slot:append>
             <q-icon name="access_time" class="cursor-pointer">
               <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                <q-time v-model="dateFrom" mask="YYYY-MM-DD HH:mm" format24h with-hours:true  :minute-options="minuteOptionsTime1" @update:model-value="checkUpdateFromdate(dateFrom)">
+                <q-time v-model="dateFrom" mask="YYYY-MM-DD HH:mm" format24h :minute-options="minuteOptionsTime1" @update:model-value="checkUpdateFromdate(dateFrom)">
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="确定" color="primary" flat/>
                   </div>
@@ -404,7 +302,7 @@ onMounted(async () => {
           <template v-slot:prepend>
             <q-icon name="event" class="cursor-pointer">
               <q-popup-proxy ref="qDateProxy" cover transition-show="scale" transition-hide="scale">
-                <q-date minimal v-model="dateTo" @update:model-value="selectDate"  mask="YYYY-MM-DD HH:mm" >
+                <q-date minimal v-model="dateTo" mask="YYYY-MM-DD HH:mm" format24h :minute-options="minuteOptionsTime1" @update:model-value="UpdateTodate(dateTo)">
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="确定" color="primary" flat/>
                   </div>
@@ -437,7 +335,7 @@ onMounted(async () => {
           <div class="column justify-start">
             <div style="font-size: 15px" class="row justify-start  col-3 "><span>查询量</span>
             </div>
-            <div style="font-size: 30px" class="row justify-start q-pl-sm col-3"><span>{{numOfQuery}}</span>
+              <div style="font-size: 30px" class="row justify-left q-pl-sm col-3"><span>{{numOfQuery}}</span>
             </div>
           </div>
         </q-card-section>
@@ -474,7 +372,7 @@ onMounted(async () => {
       </q-card>
     </div>
     <div class="row justify-start">
-      <div class="col-6">
+      <div class="col-7">
         <div class="title row justify-between q-pl-md" style="margin-top: 5px; background-color: #f9f9f9">
           <p class="text-weight-bold">
             域名访问 Top
@@ -484,8 +382,8 @@ onMounted(async () => {
         <div class="ranklist row">
           <div class="col-6 q-pl-sm">
             <div class="domain row items-center" v-for="(item, index) in topDomain.slice(0, 5)" :key="index">
-              <p style="padding-left: 6px; width: 20px;">{{ index + 1 }}</p>
-              <p style="font-weight: 600; width: 200px;">{{ item.name }}</p>
+              <p style="padding-left: 6px; width: 26px;">{{ index + 1 }}</p>
+              <p style="font-weight: 600; width: 230px;">{{ item.name }}</p>
               <p>{{ item.query_num }}</p>
             </div>
           </div>
@@ -494,13 +392,13 @@ onMounted(async () => {
             <div class="domain row items-center" v-for="(item, index) in topDomain.slice(5, 10)" :key="index">
               <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>
               <p v-else style="padding-left: 6px; width: 26px;">{{ index + 6 }}</p>
-              <p style="font-weight: 600; width: 200px;">{{ item.name }}</p>
+              <p style="font-weight: 600; width: 230px;">{{ item.name }}</p>
               <p>{{ item.query_num }}</p>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-6">
+      <div class="col-5">
         <div class="title row justify-between q-pl-md" style="margin-top: 5px; background-color: #f9f9f9">
           <p class="text-weight-bold">
             用户访问 Top
@@ -511,7 +409,7 @@ onMounted(async () => {
           <div class="col-6">
             <div class="domain row items-center" v-for="(item, index) in topUser.slice(0, 5)" :key="index">
               <p  style="padding-left: 6px; width: 26px;">{{ index + 1 }}</p>
-              <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
+              <p style="font-weight: 600; width: 130px;">{{ item.name }}</p>
               <p>{{ item.query_num }}</p>
             </div>
           </div>
@@ -520,7 +418,7 @@ onMounted(async () => {
             <div class="domain row items-center" v-for="(item, index) in topUser.slice(5, 10)" :key="index">
               <q-icon v-if="item.icon" :class="[item.color]" :name="item.icon" style="margin-right: 6px; font-size: 18px;"></q-icon>
               <p v-else style="padding-left: 6px; width: 26px;">{{ index + 6 }}</p>
-              <p style="font-weight: 600; width: 150px;">{{ item.name }}</p>
+              <p style="font-weight: 600; width: 130px;">{{ item.name }}</p>
               <p>{{ item.query_num }}</p>
             </div>
           </div>
@@ -536,7 +434,7 @@ onMounted(async () => {
         flat
         :options="[
         {label: '查询量', value: 'check'},
-        {label: '独立用户', value: 'person'},
+        {label: '平均用户数量', value: 'person'},
         {label: 'NXDOMAI率', value: 'domain'},
         {label: '成功解析次数', value: 'parse'}
       ]"
