@@ -84,7 +84,7 @@ const mapRef = ref()
 const queryData = ref<any[]>([])
 const option = computed(() => ({
   title: {
-    text: '查询量趋势'
+    text: '趋势'
   },
   tooltip: {
     trigger: 'axis'
@@ -441,9 +441,9 @@ onMounted(async () => {
         @update:model-value="changeChart(activeItem)"
       >
       </q-btn-toggle>
-      <div style="width: 90%">
-        <router-view v-model:datearray="dates"></router-view>
-      </div>
+<!--      <div style="width: 90%">-->
+<!--        <router-view v-model:datearray="dates"></router-view>-->
+<!--      </div>-->
     </div>
     <div class="row q-mt-lg justify-start">
       <div class="col-12">
